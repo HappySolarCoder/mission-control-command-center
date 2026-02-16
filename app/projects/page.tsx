@@ -192,9 +192,9 @@ export default function Projects() {
                     onClick={() => isProjectView && setSelectedProject(item.id)}
                   >
                     <div className="font-semibold mb-2">{item.title}</div>
-                    {isProjectView && 'tasks' in item && (
+                    {isProjectView && 'tasks' in item && (item as Project).tasks && (
                       <div className="text-xs text-gray-400 mb-2">
-                        {item.tasks?.length || 0} tasks
+                        {(item as Project).tasks?.length || 0} tasks
                       </div>
                     )}
                     <div className="flex gap-1 text-xs">
