@@ -8,24 +8,13 @@ type AgentStatus = 'working' | 'chatting' | 'walking' | 'idle';
 interface Agent {
   id: string;
   name: string;
+  title: string;
   status: AgentStatus;
   x: number;
   y: number;
-  color: string;
+  emoji: string;
+  isLeader?: boolean;
 }
-
-const initialAgents: Agent[] = [
-  { id: '1', name: 'Alex', status: 'working', x: 3, y: 4, color: '#FCD34D' },
-  { id: '2', name: 'Henry', status: 'working', x: 6, y: 2, color: '#60A5FA' },
-  { id: '3', name: 'Scout', status: 'working', x: 5, y: 5, color: '#9CA3AF' },
-  { id: '4', name: 'Quill', status: 'chatting', x: 2, y: 5, color: '#C084FC' },
-  { id: '5', name: 'Echo', status: 'working', x: 4, y: 5, color: '#34D399' },
-  { id: '6', name: 'Codex', status: 'working', x: 6, y: 5, color: '#F87171' },
-  { id: '7', name: 'Pixel', status: 'idle', x: 7, y: 6, color: '#FB923C' },
-  { id: '8', name: 'Benedict', status: 'working', x: 1, y: 6, color: '#8B5CF6' },
-  { id: '9', name: 'Boris', status: 'working', x: 2, y: 2, color: '#EF4444' },
-  { id: '10', name: 'Beane', status: 'working', x: 8, y: 4, color: '#10B981' },
-];
 
 const statusColors = {
   working: '#10B981',
@@ -34,20 +23,96 @@ const statusColors = {
   idle: '#9CA3AF',
 };
 
+// Office layout positions
+const DESK_POSITIONS = {
+  evan: { x: 8, y: 1 }, // Top right - Evan's office
+  benedict: { x: 2, y: 3 }, // Left workspace
+  boris: { x: 4, y: 3 }, // Center workspace
+  beane: { x: 6, y: 3 }, // Right workspace
+};
+
+const CONFERENCE_AREA = { x: 4, y: 6 };
+const WATERCOOLER_AREA = { x: 7, y: 5 };
+
+const initialAgents: Agent[] = [
+  { 
+    id: '1', 
+    name: 'Evan', 
+    title: 'CEO',
+    status: 'working', 
+    x: DESK_POSITIONS.evan.x, 
+    y: DESK_POSITIONS.evan.y, 
+    emoji: '👔',
+    isLeader: true,
+  },
+  { 
+    id: '2', 
+    name: 'Benedict', 
+    title: 'Chief of Staff',
+    status: 'working', 
+    x: DESK_POSITIONS.benedict.x, 
+    y: DESK_POSITIONS.benedict.y, 
+    emoji: '🎩',
+  },
+  { 
+    id: '3', 
+    name: 'Boris', 
+    title: 'Developer',
+    status: 'working', 
+    x: DESK_POSITIONS.boris.x, 
+    y: DESK_POSITIONS.boris.y, 
+    emoji: '💻',
+  },
+  { 
+    id: '4', 
+    name: 'Beane', 
+    title: 'Data Analyst',
+    status: 'working', 
+    x: DESK_POSITIONS.beane.x, 
+    y: DESK_POSITIONS.beane.y, 
+    emoji: '📊',
+  },
+];
+
 export default function MissionControl() {
   const [agents, setAgents] = useState<Agent[]>(initialAgents);
 
   const setAllWorking = () => {
-    setAgents(agents.map(a => ({ ...a, status: 'working' })));
+    setAgents(agents.map(a => ({
+      ...a,
+      status: 'working',
+      x: DESK_POSITIONS[a.name.toLowerCase() as keyof typeof DESK_POSITIONS].x,
+      y: DESK_POSITIONS[a.name.toLowerCase() as keyof typeof DESK_POSITIONS].y,
+    })));
   };
 
   const gather = () => {
-    // Move all agents to conference area (center)
+    // Move all agents to conference area
     setAgents(agents.map((a, i) => ({
       ...a,
-      x: 4 + (i % 3),
-      y: 4 + Math.floor(i / 3),
+      x: CONFERENCE_AREA.x + (i % 2) - 0.5,
+      y: CONFERENCE_AREA.y + Math.floor(i / 2) - 0.5,
       status: 'walking',
+    })));
+  };
+
+  const runMeeting = () => {
+    // Gather at conference table and set to chatting
+    setAgents(agents.map((a, i) => ({
+      ...a,
+      x: CONFERENCE_AREA.x + (i % 2) - 0.5,
+      y: CONFERENCE_AREA.y + Math.floor(i / 2) - 0.5,
+      status: 'chatting',
+    })));
+  };
+
+  const watercooler = () => {
+    // Move to water cooler area
+    setAgents(agents.map((a, i) => ({
+      ...a,
+      x: WATERCOOLER_AREA.x + (i % 2) * 0.5,
+      y: WATERCOOLER_AREA.y + Math.floor(i / 2) * 0.5,
+      status: 'chatting',
     })));
   };
 
@@ -133,29 +198,101 @@ export default function MissionControl() {
               <button onClick={gather} className="px-4 py-2 bg-blue-600 rounded hover:bg-blue-700">
                 Gather
               </button>
-              <button className="px-4 py-2 bg-yellow-600 rounded hover:bg-yellow-700">
+              <button onClick={runMeeting} className="px-4 py-2 bg-yellow-600 rounded hover:bg-yellow-700">
                 Run Meeting
               </button>
-              <button className="px-4 py-2 bg-cyan-600 rounded hover:bg-cyan-700">
+              <button onClick={watercooler} className="px-4 py-2 bg-cyan-600 rounded hover:bg-cyan-700">
                 Watercooler
               </button>
             </div>
           </div>
 
           {/* Office Canvas */}
-          <div className="bg-[#2a2520] rounded-lg p-8 relative" style={{ height: '500px' }}>
-            {/* Grid floor */}
+          <div className="bg-[#2a2520] rounded-lg p-8 relative" style={{ height: '600px' }}>
+            {/* Grid floor - improved texture */}
             <div className="grid grid-cols-10 grid-rows-8 gap-1 h-full">
-              {Array.from({ length: 80 }).map((_, i) => (
-                <div key={i} className="bg-[#3a3020] rounded-sm"></div>
-              ))}
+              {Array.from({ length: 80 }).map((_, i) => {
+                const col = i % 10;
+                const row = Math.floor(i / 10);
+                // Evan's office area (top right)
+                const isEvansOffice = col >= 7 && row <= 2;
+                // Conference area
+                const isConference = col >= 3 && col <= 5 && row >= 5 && row <= 7;
+                
+                return (
+                  <div 
+                    key={i} 
+                    className={`rounded-sm ${
+                      isEvansOffice ? 'bg-[#4a3830]' : 
+                      isConference ? 'bg-[#3a3530]' : 
+                      'bg-[#3a3020]'
+                    }`}
+                  ></div>
+                );
+              })}
             </div>
+
+            {/* Office Furniture */}
+            {/* Evan's Office */}
+            <div 
+              className="absolute bg-[#5a4a3a] border-2 border-[#6a5a4a] rounded"
+              style={{ left: '70%', top: '5%', width: '25%', height: '25%' }}
+            >
+              <div className="p-2 text-xs text-gray-300 font-bold">EVAN'S OFFICE</div>
+              <div className="absolute bottom-2 left-2 text-2xl">🪴</div>
+              <div className="absolute bottom-2 right-2 text-2xl">📚</div>
+            </div>
+
+            {/* Desks */}
+            {/* Benedict's Desk */}
+            <div 
+              className="absolute bg-[#4a4a4a] border border-gray-600 rounded flex items-center justify-center text-xs"
+              style={{ left: '20%', top: '35%', width: '12%', height: '8%' }}
+            >
+              💼
+            </div>
+
+            {/* Boris's Desk */}
+            <div 
+              className="absolute bg-[#4a4a4a] border border-gray-600 rounded flex items-center justify-center text-xs"
+              style={{ left: '40%', top: '35%', width: '12%', height: '8%' }}
+            >
+              🖥️
+            </div>
+
+            {/* Beane's Desk */}
+            <div 
+              className="absolute bg-[#4a4a4a] border border-gray-600 rounded flex items-center justify-center text-xs"
+              style={{ left: '60%', top: '35%', width: '12%', height: '8%' }}
+            >
+              📈
+            </div>
+
+            {/* Conference Table */}
+            <div 
+              className="absolute bg-[#5a5a5a] border-2 border-gray-500 rounded flex items-center justify-center"
+              style={{ left: '35%', top: '70%', width: '25%', height: '20%' }}
+            >
+              <div className="text-xs text-gray-300">CONFERENCE TABLE</div>
+            </div>
+
+            {/* Water Cooler */}
+            <div 
+              className="absolute flex items-center justify-center text-3xl"
+              style={{ left: '70%', top: '60%' }}
+            >
+              🚰
+            </div>
+
+            {/* Plants */}
+            <div className="absolute text-2xl" style={{ left: '10%', top: '10%' }}>🌿</div>
+            <div className="absolute text-2xl" style={{ left: '10%', top: '80%' }}>🌿</div>
 
             {/* Agents */}
             {agents.map((agent) => (
               <div
                 key={agent.id}
-                className="absolute transition-all duration-300"
+                className="absolute transition-all duration-500"
                 style={{
                   left: `${agent.x * 10}%`,
                   top: `${agent.y * 12.5}%`,
@@ -164,33 +301,40 @@ export default function MissionControl() {
               >
                 <div className="relative">
                   <div
-                    className="w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold shadow-lg"
-                    style={{ backgroundColor: agent.color }}
+                    className={`${agent.isLeader ? 'w-16 h-16 text-4xl' : 'w-14 h-14 text-3xl'} rounded-lg flex items-center justify-center shadow-lg bg-gradient-to-br from-gray-700 to-gray-800 border-2`}
+                    style={{ borderColor: agent.isLeader ? '#FFD700' : '#666' }}
                   >
-                    {agent.name[0]}
+                    {agent.emoji}
                   </div>
                   <div
                     className="absolute -top-1 -right-1 w-4 h-4 rounded-full border-2 border-[#2a2520]"
                     style={{ backgroundColor: statusColors[agent.status] }}
                   ></div>
-                  <div className="text-center mt-1 text-xs font-semibold">{agent.name}</div>
+                  <div className="text-center mt-1">
+                    <div className="text-xs font-bold">{agent.name}</div>
+                    <div className="text-[10px] text-gray-400">{agent.title}</div>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
 
-          {/* Agent Cards */}
-          <div className="grid grid-cols-5 gap-4 mt-6">
+          {/* Team Cards */}
+          <div className="grid grid-cols-4 gap-4 mt-6">
             {agents.map((agent) => (
-              <div key={agent.id} className="bg-[#111111] rounded-lg p-4 text-center hover:bg-gray-800 cursor-pointer">
-                <div
-                  className="w-12 h-12 rounded-full mx-auto mb-2 flex items-center justify-center text-xl font-bold"
-                  style={{ backgroundColor: agent.color }}
-                >
-                  {agent.name[0]}
+              <div key={agent.id} className={`bg-[#111111] rounded-lg p-4 text-center hover:bg-gray-800 cursor-pointer ${agent.isLeader ? 'border-2 border-yellow-600' : ''}`}>
+                <div className={`${agent.isLeader ? 'text-5xl' : 'text-4xl'} mb-2`}>
+                  {agent.emoji}
                 </div>
                 <div className="font-semibold">{agent.name}</div>
-                <div className="text-xs text-gray-400">Click for details</div>
+                <div className="text-xs text-gray-400">{agent.title}</div>
+                <div className="flex items-center justify-center gap-1 mt-2">
+                  <div 
+                    className="w-2 h-2 rounded-full" 
+                    style={{ backgroundColor: statusColors[agent.status] }}
+                  ></div>
+                  <span className="text-xs capitalize">{agent.status}</span>
+                </div>
               </div>
             ))}
           </div>
@@ -207,22 +351,22 @@ export default function MissionControl() {
         <div className="space-y-4">
           <div className="p-3 bg-[#1a1a1a] rounded">
             <div className="flex items-start gap-2">
-              <span className="text-red-400">🚀</span>
+              <span className="text-2xl">{agents.find(a => a.name === 'Boris')?.emoji}</span>
               <div>
-                <div className="font-semibold text-sm">quill - approval item submitted</div>
-                <div className="text-xs text-gray-400 mt-1">HIGH approval needed: I Gave Claude...</div>
-                <div className="text-xs text-gray-500 mt-1">41 minutes ago</div>
+                <div className="font-semibold text-sm">Boris - Office redesign</div>
+                <div className="text-xs text-gray-400 mt-1">Updated team roster and office layout</div>
+                <div className="text-xs text-gray-500 mt-1">Just now</div>
               </div>
             </div>
           </div>
           
           <div className="p-3 bg-[#1a1a1a] rounded">
             <div className="flex items-start gap-2">
-              <span className="text-red-400">🚀</span>
+              <span className="text-2xl">{agents.find(a => a.name === 'Benedict')?.emoji}</span>
               <div>
-                <div className="font-semibold text-sm">echo - approval item submitted</div>
-                <div className="text-xs text-gray-400 mt-1">HIGH approval needed: Agent Teams...</div>
-                <div className="text-xs text-gray-500 mt-1">42 minutes ago</div>
+                <div className="font-semibold text-sm">Benedict - QA review</div>
+                <div className="text-xs text-gray-400 mt-1">Testing new office features</div>
+                <div className="text-xs text-gray-500 mt-1">5 minutes ago</div>
               </div>
             </div>
           </div>
