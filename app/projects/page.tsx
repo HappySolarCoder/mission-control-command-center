@@ -13,6 +13,8 @@ interface Project {
   id: string;
   title: string;
   description?: string;
+  techStack?: string;
+  repoUrl?: string;
   status: 'backlog' | 'doing' | 'review' | 'done';
   tasks?: Card[];
 }
@@ -36,19 +38,61 @@ export default function Projects() {
     if (saved) {
       setProjects(JSON.parse(saved));
     } else {
-      // Initialize with demo project
-      const demo: Project[] = [{
-        id: '1',
-        title: 'Mission Control Command Center',
-        description: 'AI team dashboard with office view and project management',
-        status: 'doing',
-        tasks: [
-          { id: 't1', title: 'Fix navigation', column: 'done' },
-          { id: 't2', title: 'Build kanban board', column: 'doing' },
-          { id: 't3', title: 'Add Team page', column: 'backlog' },
-          { id: 't4', title: 'Office visual upgrades', column: 'backlog' },
-        ],
-      }];
+      // Initialize with demo projects
+      const demo: Project[] = [
+        {
+          id: '1',
+          title: 'Mission Control Command Center',
+          description: 'AI team dashboard with office view and project management',
+          techStack: 'Next.js, React, Tailwind CSS, Vercel',
+          repoUrl: 'https://github.com/HappySolarCoder/mission-control-command-center',
+          status: 'doing',
+          tasks: [
+            { id: 't1', title: 'Fix navigation', column: 'done' },
+            { id: 't2', title: 'Build kanban board', column: 'doing' },
+            { id: 't3', title: 'Add Team page', column: 'backlog' },
+            { id: 't4', title: 'Office visual upgrades', column: 'backlog' },
+          ],
+        },
+        {
+          id: '2',
+          title: 'Raydar',
+          description: 'Solar lead management and territory mapping system',
+          techStack: 'Next.js, Firebase, Google Maps API',
+          status: 'doing',
+          tasks: [
+            { id: 'r1', title: 'Lead upload flow', column: 'done' },
+            { id: 'r2', title: 'Territory assignment', column: 'review' },
+            { id: 'r3', title: 'Disposition tracking', column: 'doing' },
+            { id: 'r4', title: 'Performance optimization', column: 'backlog' },
+          ],
+        },
+        {
+          id: '3',
+          title: 'Phone Calling App',
+          description: 'Dialer application for sales team',
+          techStack: 'React Native, Twilio API',
+          status: 'backlog',
+          tasks: [
+            { id: 'p1', title: 'Call logging system', column: 'backlog' },
+            { id: 'p2', title: 'Callback scheduling', column: 'backlog' },
+            { id: 'p3', title: 'Contact sync', column: 'backlog' },
+          ],
+        },
+        {
+          id: '4',
+          title: 'Happy Solar Leads',
+          description: 'Lead generation and qualification platform',
+          techStack: 'Next.js, Vercel, Firestore',
+          repoUrl: 'https://github.com/HappySolarCoder/happy-solar-leads',
+          status: 'review',
+          tasks: [
+            { id: 'h1', title: 'Geocode API integration', column: 'done' },
+            { id: 'h2', title: 'Solar scoring algorithm', column: 'done' },
+            { id: 'h3', title: 'Final testing', column: 'review' },
+          ],
+        },
+      ];
       setProjects(demo);
       localStorage.setItem('mission-control-projects', JSON.stringify(demo));
     }
@@ -61,18 +105,31 @@ export default function Projects() {
     }
   }, [projects]);
 
+  const [showProjectForm, setShowProjectForm] = useState(false);
+  const [newProject, setNewProject] = useState({
+    title: '',
+    description: '',
+    techStack: '',
+    repoUrl: '',
+  });
+
   const addItem = (isProject: boolean) => {
-    if (!newItemTitle.trim()) return;
-    
     if (isProject) {
-      const newProject: Project = {
+      if (!newProject.title.trim()) return;
+      
+      const project: Project = {
         id: Date.now().toString(),
-        title: newItemTitle,
+        title: newProject.title,
+        description: newProject.description,
+        techStack: newProject.techStack,
+        repoUrl: newProject.repoUrl,
         status: 'backlog',
         tasks: [],
       };
-      setProjects([...projects, newProject]);
-    } else if (selectedProject) {
+      setProjects([...projects, project]);
+      setNewProject({ title: '', description: '', techStack: '', repoUrl: '' });
+      setShowProjectForm(false);
+    } else if (selectedProject && newItemTitle.trim()) {
       const updated = projects.map(p => {
         if (p.id === selectedProject) {
           const newTask: Card = {
@@ -85,10 +142,9 @@ export default function Projects() {
         return p;
       });
       setProjects(updated);
+      setNewItemTitle('');
+      setShowAddForm(false);
     }
-    
-    setNewItemTitle('');
-    setShowAddForm(false);
   };
 
   const moveItem = (itemId: string, newColumn: typeof COLUMNS[number]['id']) => {
@@ -123,6 +179,13 @@ export default function Projects() {
   const currentProject = projects.find(p => p.id === selectedProject);
   const items = currentProject?.tasks || [];
 
+  // Calculate progress percentage for a project
+  const getProjectProgress = (project: Project) => {
+    if (!project.tasks || project.tasks.length === 0) return 0;
+    const completed = project.tasks.filter(t => t.column === 'done').length;
+    return Math.round((completed / project.tasks.length) * 100);
+  };
+
   // Projects list view
   if (!selectedProject) {
     const statusColors = {
@@ -135,39 +198,64 @@ export default function Projects() {
     return (
       <div className="min-h-screen bg-[#1a1a1a] text-white p-8">
         <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-4xl font-bold">Projects</h1>
+          <h1 className="text-4xl font-bold">Development Projects</h1>
           <div className="flex gap-2">
             <Link href="/" className="px-4 py-2 bg-gray-700 rounded hover:bg-gray-600">
               Back to Office
             </Link>
             <button
-              onClick={() => setShowAddForm(true)}
+              onClick={() => setShowProjectForm(true)}
               className="px-4 py-2 bg-green-600 rounded hover:bg-green-700"
             >
-              + Add Project
+              + New Project
             </button>
           </div>
         </div>
 
-        {showAddForm && (
-          <div className="mb-6 bg-[#111111] p-4 rounded">
-            <input
-              type="text"
-              value={newItemTitle}
-              onChange={(e) => setNewItemTitle(e.target.value)}
-              placeholder="Enter project title..."
-              className="w-full bg-[#1a1a1a] border border-gray-700 rounded px-4 py-2 mb-2"
-              onKeyDown={(e) => e.key === 'Enter' && addItem(true)}
-            />
-            <div className="flex gap-2">
+        {showProjectForm && (
+          <div className="mb-6 bg-[#111111] p-6 rounded-lg">
+            <h3 className="text-xl font-bold mb-4">Create New Project</h3>
+            <div className="space-y-3">
+              <input
+                type="text"
+                value={newProject.title}
+                onChange={(e) => setNewProject({ ...newProject, title: e.target.value })}
+                placeholder="Project name (e.g., Raydar, Phone Calling App)"
+                className="w-full bg-[#1a1a1a] border border-gray-700 rounded px-4 py-2"
+              />
+              <textarea
+                value={newProject.description}
+                onChange={(e) => setNewProject({ ...newProject, description: e.target.value })}
+                placeholder="Description/purpose"
+                className="w-full bg-[#1a1a1a] border border-gray-700 rounded px-4 py-2 h-20"
+              />
+              <input
+                type="text"
+                value={newProject.techStack}
+                onChange={(e) => setNewProject({ ...newProject, techStack: e.target.value })}
+                placeholder="Tech stack (e.g., Next.js, Firebase, React)"
+                className="w-full bg-[#1a1a1a] border border-gray-700 rounded px-4 py-2"
+              />
+              <input
+                type="text"
+                value={newProject.repoUrl}
+                onChange={(e) => setNewProject({ ...newProject, repoUrl: e.target.value })}
+                placeholder="GitHub repo URL (optional)"
+                className="w-full bg-[#1a1a1a] border border-gray-700 rounded px-4 py-2"
+              />
+            </div>
+            <div className="flex gap-2 mt-4">
               <button
                 onClick={() => addItem(true)}
                 className="px-4 py-2 bg-green-600 rounded hover:bg-green-700"
               >
-                Add
+                Create Project
               </button>
               <button
-                onClick={() => { setShowAddForm(false); setNewItemTitle(''); }}
+                onClick={() => {
+                  setShowProjectForm(false);
+                  setNewProject({ title: '', description: '', techStack: '', repoUrl: '' });
+                }}
                 className="px-4 py-2 bg-gray-700 rounded hover:bg-gray-600"
               >
                 Cancel
@@ -176,44 +264,89 @@ export default function Projects() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {projects.map((project) => (
-            <div
-              key={project.id}
-              className="bg-[#111111] rounded-lg p-6 cursor-pointer hover:bg-gray-800 transition-colors"
-              onClick={() => setSelectedProject(project.id)}
-            >
-              <div className="flex items-start justify-between mb-3">
-                <h3 className="text-xl font-bold">{project.title}</h3>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (confirm('Delete this project?')) {
-                      deleteItem(project.id);
-                    }
-                  }}
-                  className="text-red-400 hover:text-red-300"
-                >
-                  ×
-                </button>
-              </div>
-              {project.description && (
-                <p className="text-gray-400 text-sm mb-3">{project.description}</p>
-              )}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div
-                    className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: statusColors[project.status] }}
-                  ></div>
-                  <span className="text-sm capitalize">{project.status}</span>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {projects.map((project) => {
+            const progress = getProjectProgress(project);
+            return (
+              <div
+                key={project.id}
+                className="bg-[#111111] rounded-lg p-6 cursor-pointer hover:bg-gray-800 transition-colors border-l-4"
+                style={{ borderColor: statusColors[project.status] }}
+                onClick={() => setSelectedProject(project.id)}
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <h3 className="text-xl font-bold">{project.title}</h3>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (confirm(`Delete ${project.title}? This will remove all tasks.`)) {
+                        deleteItem(project.id);
+                      }
+                    }}
+                    className="text-red-400 hover:text-red-300 text-xl"
+                  >
+                    ×
+                  </button>
                 </div>
-                <span className="text-sm text-gray-400">
-                  {project.tasks?.length || 0} tasks
-                </span>
+                
+                {project.description && (
+                  <p className="text-gray-400 text-sm mb-3">{project.description}</p>
+                )}
+                
+                {project.techStack && (
+                  <div className="mb-3">
+                    <span className="text-xs text-gray-500">Tech Stack:</span>
+                    <p className="text-sm text-blue-400">{project.techStack}</p>
+                  </div>
+                )}
+                
+                {project.repoUrl && (
+                  <div className="mb-3">
+                    <a
+                      href={project.repoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-sm text-purple-400 hover:text-purple-300 flex items-center gap-1"
+                    >
+                      📁 GitHub Repo →
+                    </a>
+                  </div>
+                )}
+                
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: statusColors[project.status] }}
+                      ></div>
+                      <span className="capitalize">{project.status}</span>
+                    </div>
+                    <span className="text-gray-400">
+                      {project.tasks?.length || 0} features
+                    </span>
+                  </div>
+                  
+                  <div>
+                    <div className="flex justify-between text-xs text-gray-400 mb-1">
+                      <span>Progress</span>
+                      <span>{progress}%</span>
+                    </div>
+                    <div className="w-full bg-gray-700 rounded-full h-2">
+                      <div
+                        className="h-2 rounded-full transition-all"
+                        style={{
+                          width: `${progress}%`,
+                          backgroundColor: progress === 100 ? '#42A5F5' : '#FDD835',
+                        }}
+                      ></div>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     );
