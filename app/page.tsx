@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 
 type AgentStatus = 'working' | 'chatting' | 'walking' | 'idle';
 
@@ -60,11 +61,17 @@ export default function MissionControl() {
         </div>
         
         <nav className="space-y-2">
-          {['Tasks', 'Content', 'Approvals', 'Council', 'Calendar', 'Projects', 'Memory', 'Docs', 'People', 'Office', 'Team'].map((item) => (
-            <div key={item} className={`px-3 py-2 rounded hover:bg-gray-800 cursor-pointer ${item === 'Office' ? 'bg-gray-800' : ''}`}>
-              {item}
-            </div>
-          ))}
+          <Link href="/tasks" className="block px-3 py-2 rounded hover:bg-gray-800">Tasks</Link>
+          <Link href="/content" className="block px-3 py-2 rounded hover:bg-gray-800">Content</Link>
+          <Link href="/approvals" className="block px-3 py-2 rounded hover:bg-gray-800">Approvals</Link>
+          <Link href="/council" className="block px-3 py-2 rounded hover:bg-gray-800">Council</Link>
+          <Link href="/calendar" className="block px-3 py-2 rounded hover:bg-gray-800">Calendar</Link>
+          <Link href="/projects" className="block px-3 py-2 rounded hover:bg-gray-800">Projects</Link>
+          <Link href="/memory" className="block px-3 py-2 rounded hover:bg-gray-800">Memory</Link>
+          <Link href="/docs" className="block px-3 py-2 rounded hover:bg-gray-800">Docs</Link>
+          <Link href="/people" className="block px-3 py-2 rounded hover:bg-gray-800">People</Link>
+          <Link href="/" className="block px-3 py-2 rounded bg-gray-800">Office</Link>
+          <Link href="/team" className="block px-3 py-2 rounded hover:bg-gray-800">Team</Link>
         </nav>
       </div>
 
